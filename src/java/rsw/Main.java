@@ -1,11 +1,15 @@
 package rsw;
 
+import java.awt.AWTException;
+import java.awt.Robot;
+import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
+import java.nio.ByteBuffer;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -37,8 +41,12 @@ public class Main {
 
     private Server server;
 
-    private Main() throws IOException {
+    private Robot robot;
+
+    private Main() throws IOException, AWTException {
         instance = this;
+
+        robot = new Robot();
 
         File f_cert = File.createTempFile("krisgroup2024-subroot-test1-localhost", "pfx");
 
@@ -127,7 +135,7 @@ public class Main {
                         case WSUtils.OP_CLOSE:
                             break loop;
                         case WSUtils.OP_BINARY: {
-
+                            processPacket(frame.data);
                         }
                             break;
                         case WSUtils.OP_PING: {
@@ -157,6 +165,40 @@ public class Main {
         public void close() throws IOException {
             con.close();
             threads.remove(Thread.currentThread());
+        }
+    }
+
+    void processPacket(byte[] data) {
+        ByteBuffer buf = ByteBuffer.wrap(data);
+        int p_id = buf.getInt();
+        switch (p_id) {
+            case 1: { // reset
+                robot.keyRelease(KeyEvent.VK_W);
+                robot.keyRelease(KeyEvent.VK_S);
+                System.out.println("Reset");
+            }
+                break;
+            case 2: { // ypr
+
+            }
+                break;
+            case 3: { // key
+                int key = buf.getInt();
+                byte flag = buf.get();
+                if (key == 87 || key == 83) {
+                    System.out.printf("Key %s %s\n", (key == 87) ? "W" : "S", flag == 1 ? "pressed" : "released");
+                    int keycode = key == 87 ? KeyEvent.VK_W : KeyEvent.VK_S;
+                    if (flag == 1) {
+                        robot.keyPress(keycode);
+                    } else {
+                        robot.keyRelease(keycode);
+                    }
+                }
+            }
+                break;
+            default:
+                System.err.printf("Known packet: %d\n", p_id);
+                break;
         }
     }
 
