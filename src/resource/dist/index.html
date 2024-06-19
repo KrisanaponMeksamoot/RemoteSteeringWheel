@@ -1,0 +1,43 @@
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width">
+</head>
+<body>
+    <div id="container">
+        <button id="togglesend">Start</button>
+        <button onclick="document.exitFullscreen();stopSend();">Exit Fullscreen</button>
+        <a id="stat"></a><br>
+        <a id="log"></a>
+    </div>
+    <button id="key_s">S</button>
+    <button id="key_w">W</button>
+
+    <script src="script.js"></script>
+    <style>
+        #container {
+            background-color: white;
+            margin: 8px;
+        }
+        button {
+            font-size: large;
+        }
+        button#key_s, button#key_w {
+            font-size: 10vh;
+            height: 60%;
+            width: 40%;
+            position: absolute;
+            bottom: 0px;
+            user-select: none;
+        }
+        button#key_s {
+            left: 0px;
+        }
+        button#key_w {
+            right: 0px;
+        }
+    </style>
+</body>
+
+</html>
