@@ -13,8 +13,7 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
-import java.util.LinkedList;
-import java.util.TreeSet;
+import java.util.HashSet;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -34,7 +33,7 @@ public class Main {
 
     ServerSocket ss;
 
-    TreeSet<WsConThread> threads = new TreeSet<>();
+    HashSet<WsConThread> threads = new HashSet<>();
 
     private Server server;
 
