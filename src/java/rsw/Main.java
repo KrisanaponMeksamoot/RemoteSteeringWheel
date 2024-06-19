@@ -95,7 +95,9 @@ public class Main {
             HttpRequest req = con.getRequest();
             HttpResponse res = con.getResponse();
             String path = req.getURI().getPath();
-            System.out.printf("%s %s\n", con.getRequest().getMethod(), path);
+            System.out.printf("%s : %s %s\n", con.getSocket().getRemoteSocketAddress().toString(),
+                    con.getRequest().getMethod(),
+                    path);
             InputStream data;
             res.setStatus("200 OK");
             if (path.equals("/") || path.equals("/index.html")) {
