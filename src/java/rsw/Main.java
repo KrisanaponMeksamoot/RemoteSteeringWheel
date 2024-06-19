@@ -1,7 +1,9 @@
 package rsw;
 
 import java.awt.AWTException;
+import java.awt.MouseInfo;
 import java.awt.Robot;
+import java.awt.Toolkit;
 import java.awt.event.KeyEvent;
 import java.io.ByteArrayInputStream;
 import java.io.File;
@@ -10,6 +12,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.ServerSocket;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.security.KeyManagementException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -42,6 +45,8 @@ public class Main {
     private Server server;
 
     private Robot robot;
+
+    private double mul = -2;
 
     private Main() throws IOException, AWTException {
         instance = this;
@@ -169,7 +174,7 @@ public class Main {
     }
 
     void processPacket(byte[] data) {
-        ByteBuffer buf = ByteBuffer.wrap(data);
+        ByteBuffer buf = ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN);
         int p_id = buf.getInt();
         switch (p_id) {
             case 1: { // reset
@@ -179,7 +184,11 @@ public class Main {
             }
                 break;
             case 2: { // ypr
-
+                double width = Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+                float roll = buf.getFloat(12);
+                // System.out.printf("Roll: %.2f : %f\n", roll, (roll / Math.PI * mul + 1) / 2);
+                robot.mouseMove((int) ((roll / Math.PI * mul + 1) / 2 * width),
+                        (int) MouseInfo.getPointerInfo().getLocation().getY());
             }
                 break;
             case 3: { // key
