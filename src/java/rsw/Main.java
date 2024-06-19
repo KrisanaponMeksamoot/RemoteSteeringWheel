@@ -13,6 +13,8 @@ import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
+import java.util.LinkedList;
+import java.util.TreeSet;
 
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -31,6 +33,8 @@ public class Main {
     static Main instance;
 
     ServerSocket ss;
+
+    TreeSet<WsConThread> threads = new TreeSet<>();
 
     private Server server;
 
@@ -89,10 +93,7 @@ public class Main {
                 data = ClassLoader.getSystemResourceAsStream("dist/script.js");
                 res.putAttribute("Content-Type", "text/javascipt");
             } else if (path.equals("/ws") && WebsocketHandler.isWebsocket(req)) {
-                WebsocketHandler ws = new WebsocketHandler(con);
-                ws.sendHeader();
-                ws.send(new WSFrame(true, WSUtils.OP_CLOSE, new byte[] { 0, 0 }));
-                ws.close();
+                new WsConThread(con).start();
                 return;
             } else {
                 data = new ByteArrayInputStream("404 Not Found".getBytes());
@@ -102,15 +103,61 @@ public class Main {
             con.getResponse().putAttribute("Content-Length", Integer.toString(data.available()));
             con.sendHeader();
             data.transferTo(con.getOutputStream());
+            con.close();
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            if (!con.getSocket().isClosed())
+        }
+    }
+
+    class WsConThread extends Thread {
+        ClientConnection con;
+
+        public WsConThread(ClientConnection con) {
+            this.con = con;
+            threads.add(this);
+        }
+
+        @Override
+        public void run() {
+            try {
+                WebsocketHandler ws = new WebsocketHandler(con);
+                ws.sendHeader();
+                loop: while (true) {
+                    WSFrame frame = ws.receive();
+                    switch (frame.opcode) {
+                        case WSUtils.OP_CLOSE:
+                            break loop;
+                        case WSUtils.OP_BINARY: {
+
+                        }
+                            break;
+                        case WSUtils.OP_PING: {
+                            ws.send(new WSFrame(true, WSUtils.OP_PONG, frame.data));
+                        }
+                            break;
+                    }
+                }
+                ws.send(new WSFrame(true, WSUtils.OP_CLOSE, new byte[] { 0, 0 }));
+                ws.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            } finally {
                 try {
-                    con.close();
+                    close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+            threads.remove(Thread.currentThread());
+        }
+
+        public ClientConnection getClientConnection() {
+            return con;
+        }
+
+        public void close() throws IOException {
+            con.close();
+            threads.remove(Thread.currentThread());
         }
     }
 
